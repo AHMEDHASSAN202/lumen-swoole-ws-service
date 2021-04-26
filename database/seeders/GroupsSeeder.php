@@ -30,7 +30,77 @@ class GroupsSeeder extends Seeder
                 'group_name'    => 'Second Group',
                 'fk_created_by' => 1,
                 'created_at'    => Carbon::now()
+            ],
+            [
+                'group_name'    => 'First Group',
+                'fk_created_by' => 1,
+                'created_at'    => Carbon::now()
+            ],
+            [
+                'group_name'    => 'Second Group',
+                'fk_created_by' => 1,
+                'created_at'    => Carbon::now()
+            ],
+            [
+                'group_name'    => 'First Group',
+                'fk_created_by' => 1,
+                'created_at'    => Carbon::now()
+            ],
+            [
+                'group_name'    => 'Second Group',
+                'fk_created_by' => 1,
+                'created_at'    => Carbon::now()
+            ],
+            [
+                'group_name'    => 'First Group',
+                'fk_created_by' => 1,
+                'created_at'    => Carbon::now()
+            ],
+            [
+                'group_name'    => 'Second Group',
+                'fk_created_by' => 1,
+                'created_at'    => Carbon::now()
+            ],
+            [
+                'group_name'    => 'First Group',
+                'fk_created_by' => 1,
+                'created_at'    => Carbon::now()
+            ],
+            [
+                'group_name'    => 'Second Group',
+                'fk_created_by' => 1,
+                'created_at'    => Carbon::now()
+            ],[
+                'group_name'    => 'First Group',
+                'fk_created_by' => 1,
+                'created_at'    => Carbon::now()
+            ],
+            [
+                'group_name'    => 'Second Group',
+                'fk_created_by' => 2,
+                'created_at'    => Carbon::now()
             ]
+            ,[
+                'group_name'    => 'First Group',
+                'fk_created_by' => 2,
+                'created_at'    => Carbon::now()
+            ],
+            [
+                'group_name'    => 'Second Group',
+                'fk_created_by' => 1,
+                'created_at'    => Carbon::now()
+            ]
+            ,[
+                'group_name'    => 'First Group',
+                'fk_created_by' => 2,
+                'created_at'    => Carbon::now()
+            ],
+            [
+                'group_name'    => 'Second Group',
+                'fk_created_by' => 1,
+                'created_at'    => Carbon::now()
+            ]
+
         ]);
 
         DB::table('groups_users')->insert([
@@ -44,6 +114,66 @@ class GroupsSeeder extends Seeder
             ],
             [
                 'fk_group_id'    => 2,
+                'fk_user_id'     => 1
+            ],
+            [
+                'fk_group_id'    => 3,
+                'fk_user_id'     => 1
+            ],
+            [
+                'fk_group_id'    => 3,
+                'fk_user_id'     => 2
+            ],
+            [
+                'fk_group_id'    => 4,
+                'fk_user_id'     => 1
+            ],
+            [
+                'fk_group_id'    => 5,
+                'fk_user_id'     => 1
+            ],
+            [
+                'fk_group_id'    => 4,
+                'fk_user_id'     => 2
+            ],
+            [
+                'fk_group_id'    => 4,
+                'fk_user_id'     => 1
+            ],
+            [
+                'fk_group_id'    => 6,
+                'fk_user_id'     => 1
+            ],
+            [
+                'fk_group_id'    => 7,
+                'fk_user_id'     => 2
+            ],
+            [
+                'fk_group_id'    => 8,
+                'fk_user_id'     => 1
+            ],
+            [
+                'fk_group_id'    => 9,
+                'fk_user_id'     => 1
+            ],
+            [
+                'fk_group_id'    => 10,
+                'fk_user_id'     => 2
+            ],
+            [
+                'fk_group_id'    => 11,
+                'fk_user_id'     => 1
+            ],
+            [
+                'fk_group_id'    => 12,
+                'fk_user_id'     => 1
+            ],
+            [
+                'fk_group_id'    => 13,
+                'fk_user_id'     => 2
+            ],
+            [
+                'fk_group_id'    => 14,
                 'fk_user_id'     => 1
             ],
         ]);

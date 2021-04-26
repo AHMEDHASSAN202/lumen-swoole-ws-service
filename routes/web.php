@@ -22,3 +22,7 @@ $router->get('chat/get-users-and-groups', [
     'uses' => 'ChatController@getUsersAndGroups'
 ]);
 
+$router->get('chat/get-messages', [
+    'middleware' => ['auth', 'permissions:chats-browse'],
+    'uses' => 'ChatController@getMessages'
+]);

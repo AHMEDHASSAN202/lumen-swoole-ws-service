@@ -13,4 +13,11 @@ class ChatController extends Controller
   
         return response()->json(compact('usersAndGroups'));
     }
+
+    public function getMessages(Request $request)
+    {
+        $messages = app(\App\Repositories\ChatRepository::class)->getMessages($request);
+
+        return response()->json(['messages' => $messages]);
+    }
 }

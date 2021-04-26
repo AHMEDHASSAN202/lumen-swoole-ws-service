@@ -6,6 +6,7 @@
 
 namespace App\Repositories;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Collection;
@@ -20,12 +21,15 @@ class ChatRepository
     const GROUPS_USERS_TABLE = 'groups_users';
     const ROLES_DESCRIPTIONS_TABLE = 'roles_description';
     const DEFAULT_LANGUAGE_ID = 1;
+    const FAKE_USERS_GROUPS_PER_PAGE = 200;
 
     //Don't Forgot Ahmed Cached This Query
-    public function getUsersAndGroups($request) : Collection
+    public function getUsersAndGroups(Request $request) : Collection
     {
         $languageId = $request->get('lang', self::DEFAULT_LANGUAGE_ID);
         $userId = $request->user()->user_id;
+        $limit = self::FAKE_USERS_GROUPS_PER_PAGE / 2;
+        $offset = (((int)$request->get('page', 1)) - 1) * $limit;
 
         $users = DB::table(self::USERS_TABLE)
                     ->select(
@@ -41,6 +45,8 @@ class ChatRepository
                         $join->on('message_id', '=', $lastMessageQuery);
                     })
                     ->where('user_id', '!=', $userId)
+                    ->offset($offset)
+                    ->limit($limit)
                     ->get();
 
         $groups = DB::table(self::GROUPS_TABLE)
@@ -53,11 +59,59 @@ class ChatRepository
                         $lastMessageQuery = DB::raw('(SELECT message_id FROM ' . self::MESSAGES_TABLE . ' WHERE fk_group_id=group_id ORDER BY (message_id) DESC LIMIT 1)');
                         $join->on('message_id', '=', $lastMessageQuery);
                     })
+                    ->offset($offset)
+                    ->limit($limit)
                     ->get();
 
         /** @noinspection PhpLanguageLevelInspection */
-        $result = collect([...$users, ...$groups]);
+        $result = collect([...$users, ...$groups])->sortBy(function ($obj) {
+            return $obj->created_at ? strtotime($obj->created_at) : strtotime('2010-01-01 00:00:00');
+        }, SORT_REGULAR, 'DESC');
 
-        return $result;
+        return $result->values();
+    }
+
+    public function getMessages(Request $request) : array
+    {
+        $userId = $request->get('user_id');
+        $groupId = $request->get('group_id');
+        $myId = $request->user()->user_id;
+
+        if ($userId) {
+            //get private messages
+            return $this->getPrivateChatMessage($myId, $userId);
+        }
+
+        if ($groupId) {
+            //get group messages
+            return $this->getGroupChatMessages($myId, $groupId);
+        }
+
+        return [];
+    }
+
+    public function getPrivateChatMessage($myId, $userId)
+    {
+        $messages =  DB::table(self::MESSAGES_TABLE)
+                        ->select(self::MESSAGES_TABLE.'.*', 'user_id', 'user_name', 'user_avatar')
+                        ->leftJoin(self::MESSAGES_FILES_TABLE, function ($join) {
+                            $join->on('fk_file_id', '=', 'file_id')->where('fk_file_id', '!=', null);
+                        })
+                        ->join(self::USERS_TABLE, 'user_id', '=', 'fk_sender_id')
+                        ->where(function ($query) use ($myId, $userId) {
+                            $query->where('fk_sender_id', $myId)->where('fk_receiver_id', $userId);
+                        })->orWhere(function ($query) use ($myId, $userId) {
+                            $query->where('fk_sender_id', $userId)->where('fk_receiver_id', $myId);
+                        })
+                        ->orderBy('message_id', 'ASC')
+                        ->get()
+                        ->toArray();
+
+        return $messages;
+    }
+
+    public function getGroupChatMessages($myId, $groupId)
+    {
+
     }
 }
