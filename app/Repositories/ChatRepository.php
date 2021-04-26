@@ -50,11 +50,11 @@ class ChatRepository
                     ->get();
 
         $groups = DB::table(self::GROUPS_TABLE)
-                    ->select('group_id', 'group_name', DB::raw("'group' AS model_type"), self::MESSAGES_TABLE.'.*')
+                    ->select('group_id', 'group_name', 'fk_created_by', 'user_name as created_by_name', DB::raw("'group' AS model_type"), self::MESSAGES_TABLE.'.*')
                     ->join(self::GROUPS_USERS_TABLE, function ($join) use ($userId) {
-                        $join->on('group_id', '=', 'fk_group_id')
-                             ->where('fk_user_id', '=', $userId);
+                        $join->on('group_id', '=', 'fk_group_id')->where('fk_user_id', '=', $userId);
                     })
+                    ->leftJoin(self::USERS_TABLE, 'fk_created_by', '=', 'user_id')
                     ->leftJoin(self::MESSAGES_TABLE, function ($join) use ($userId) {
                         $lastMessageQuery = DB::raw('(SELECT message_id FROM ' . self::MESSAGES_TABLE . ' WHERE fk_group_id=group_id ORDER BY (message_id) DESC LIMIT 1)');
                         $join->on('message_id', '=', $lastMessageQuery);
@@ -92,26 +92,36 @@ class ChatRepository
 
     public function getPrivateChatMessage($myId, $userId)
     {
-        $messages =  DB::table(self::MESSAGES_TABLE)
-                        ->select(self::MESSAGES_TABLE.'.*', 'user_id', 'user_name', 'user_avatar')
-                        ->leftJoin(self::MESSAGES_FILES_TABLE, function ($join) {
-                            $join->on('fk_file_id', '=', 'file_id')->where('fk_file_id', '!=', null);
-                        })
-                        ->join(self::USERS_TABLE, 'user_id', '=', 'fk_sender_id')
-                        ->where(function ($query) use ($myId, $userId) {
-                            $query->where('fk_sender_id', $myId)->where('fk_receiver_id', $userId);
-                        })->orWhere(function ($query) use ($myId, $userId) {
-                            $query->where('fk_sender_id', $userId)->where('fk_receiver_id', $myId);
-                        })
-                        ->orderBy('message_id', 'ASC')
-                        ->get()
-                        ->toArray();
-
-        return $messages;
+        return DB::table(self::MESSAGES_TABLE)
+                    ->select(self::MESSAGES_TABLE.'.*', 'user_id', 'user_name', 'user_avatar', 'original_name', 'file_path')
+                    ->leftJoin(self::MESSAGES_FILES_TABLE, function ($join) {
+                        $join->on('fk_file_id', '=', 'file_id')->where('fk_file_id', '!=', null);
+                    })
+                    ->join(self::USERS_TABLE, 'user_id', '=', 'fk_sender_id')
+                    ->where(function ($query) use ($myId, $userId) {
+                        $query->where('fk_sender_id', $myId)->where('fk_receiver_id', $userId);
+                    })->orWhere(function ($query) use ($myId, $userId) {
+                        $query->where('fk_sender_id', $userId)->where('fk_receiver_id', $myId);
+                    })
+                    ->orderBy('message_id', 'ASC')
+                    ->get()
+                    ->toArray();
     }
 
     public function getGroupChatMessages($myId, $groupId)
     {
-
+        return DB::table(self::MESSAGES_TABLE)
+                    ->select(self::MESSAGES_TABLE.'.*', 'user_id', 'user_name', 'user_avatar', 'original_name', 'file_path')
+                    ->leftJoin(self::MESSAGES_FILES_TABLE, function ($join) {
+                        $join->on('fk_file_id', '=', 'file_id')->where('fk_file_id', '!=', null);
+                    })
+                    ->join(self::USERS_TABLE, 'user_id', '=', 'fk_sender_id')
+                    ->join(self::GROUPS_USERS_TABLE, function ($join) use ($myId) {
+                        $join->on(self::MESSAGES_TABLE.'.fk_group_id', '=', self::GROUPS_USERS_TABLE.'.fk_group_id')->where('fk_user_id', '=', $myId);
+                    })
+                    ->where(self::MESSAGES_TABLE.'.fk_group_id', $groupId)
+                    ->orderBy('message_id', 'ASC')
+                    ->get()
+                    ->toArray();
     }
 }
