@@ -7,7 +7,7 @@ use Closure;
 class CorsOriginMiddleware
 {
     /**
-     * Handle an incoming request.
+     * Handle CORS 
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
@@ -15,10 +15,23 @@ class CorsOriginMiddleware
      */
     public function handle($request, Closure $next)
     {
-        return $next($request)
-                ->header('Access-Control-Allow-Origin', env('MAIN_DOMAIN'))
-                ->header('Access-Control-Allow-Credentials', 'true')
-                ->header('Access-Control-Allow-Headers', '*')
-                ->header('Access-Control-Allow-Methods', '*');
+        $headers = [
+            'Access-Control-Allow-Origin'       =>  env('MAIN_DOMAIN'),
+            'Access-Control-Allow-Credentials'  =>  'true',
+            'Access-Control-Allow-Methods'      =>  'GET, POST, PATCH, PUT, DELETE, OPTIONS, HEAD',
+            'Access-Control-Allow-Headers'      =>  '*',
+        ];
+
+        if ($request->isMethod('OPTIONS')) {
+            return response()->json('{"method":"OPTIONS"}', 200, $headers);
+        }
+
+        $response = $next($request);
+
+        foreach($headers as $key => $value) {
+            $response->header($key, $value);
+        }
+
+        return $response;
     }
 }

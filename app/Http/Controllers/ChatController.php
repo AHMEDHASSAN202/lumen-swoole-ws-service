@@ -7,6 +7,12 @@ use Illuminate\Http\Request;
 
 class ChatController extends Controller
 {
+    /**
+     * Get users and my groups
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function getUsersAndGroups(Request $request)
     {
         $usersAndGroups = app(\App\Repositories\ChatRepository::class)->getUsersAndGroups($request);
@@ -14,6 +20,13 @@ class ChatController extends Controller
         return response()->json(compact('usersAndGroups'));
     }
 
+    /**
+     * Get messages
+     * Private message (by user_id) || Group messages by (group_id)
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function getMessages(Request $request)
     {
         $messages = app(\App\Repositories\ChatRepository::class)->getMessages($request);

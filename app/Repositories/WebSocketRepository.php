@@ -9,6 +9,13 @@ class WebSocketRepository {
 
     const TABLE_NAME = 'onlineUsers';
 
+    /**
+     * Add Current User To Swoole Online Users Table
+     *
+     * @param $user
+     * @param $fd
+     * @return mixed
+     */
     public function addToUsersTable($user, $fd)
     {
         $table = Table::get(self::TABLE_NAME);
@@ -19,6 +26,12 @@ class WebSocketRepository {
         ]);
     }
 
+    /**
+     * Remove Current User From Swoole Online Users Table
+     *
+     * @param $userId
+     * @return null
+     */
     public function removeFromUsersTable($userId)
     {
         if (!$userId) return null;
@@ -28,6 +41,12 @@ class WebSocketRepository {
         return $table->del($userId);
     }
 
+    /**
+     * Get Current User Of Swoole Online Users Table
+     *
+     * @param $userId
+     * @return null
+     */
     public function getUserFromTable($userId)
     {
         if (!$userId) return null;
@@ -37,6 +56,12 @@ class WebSocketRepository {
         return $table->get($userId);
     }
 
+    /**
+     * Check Current User Exists In Swoole Online Users Table
+     *
+     * @param $userId
+     * @return false
+     */
     public function userExistsTable($userId)
     {
         if (!$userId) return false;
@@ -46,10 +71,30 @@ class WebSocketRepository {
         return $table->exist($userId);
     }
 
+    /**
+     * Count Swoole Online Users Table
+     *
+     * @return mixed
+     */
     public function countUsersTable()
     {
         $table = Table::get(self::TABLE_NAME);
 
         return $table->count();
+    }
+
+    /**
+     * Get All Online Users From Swoole Table
+     *
+     * @return array
+     */
+    public function getOnlineUsers()
+    {
+        $onlineUsers = [];
+        $table = Table::get(self::TABLE_NAME);
+        foreach ($table as $userId => $userData) {
+            $onlineUsers[] = (int)$userId;
+        }
+        return $onlineUsers;
     }
 }

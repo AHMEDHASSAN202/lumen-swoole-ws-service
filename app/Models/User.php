@@ -21,6 +21,12 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         'user_token'
     ];
 
+    /**
+     * Check Current Instance ($this) has Permissions
+     * 
+     * @param $permission
+     * @return bool
+     */
     public function hasPermissions($permission)
     {
         $permissions = is_array($permission) ? $permission : [$permission];

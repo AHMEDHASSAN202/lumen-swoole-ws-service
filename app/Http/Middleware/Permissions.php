@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 class Permissions
 {
     /**
-     * Handle an incoming request.
+     * Handle User Permissions
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
@@ -18,7 +18,9 @@ class Permissions
      */
     public function handle(Request $request, Closure $next, ...$permissions)
     {
+        //get current user
         $me = $request->user();
+        //if user not has all permissions params
         if (!$me->hasPermissions($permissions)) {
             return response('permission denied.', 403);
         }

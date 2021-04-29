@@ -17,12 +17,17 @@ $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
-$router->get('chat/get-users-and-groups', [
-    'middleware' => ['auth', 'permissions:chats-browse'],
-    'uses' => 'ChatController@getUsersAndGroups'
-]);
+//chat routes
+$router->group(['middleware' => 'auth', 'prefix' => 'chat'], function () use ($router) {
+    $router->get('get-users-and-groups', ['middleware' => ['permissions:chats-browse'], 'uses' => 'ChatController@getUsersAndGroups']);
+    $router->get('get-messages', ['middleware' => ['permissions:chats-browse'], 'uses' => 'ChatController@getMessages']);
+});
 
-$router->get('chat/get-messages', [
-    'middleware' => ['auth', 'permissions:chats-browse'],
-    'uses' => 'ChatController@getMessages'
-]);
+//Groups Routes
+$router->group(['middleware' => 'auth', 'prefix' => 'groups'], function () use ($router) {
+    $router->get('', ['middleware' => ['permissions:chat_groups-browse'], 'uses' => 'GroupsController@getAllGroups']);
+    $router->get('{group_id}/members', ['middleware' => ['permissions:chat_groups-browse'], 'uses' => 'GroupsController@getGroupMembers']);
+    $router->post('', ['middleware' => ['permissions:chat_groups-create'], 'uses' => 'GroupsController@storeGroup']);
+    $router->put('{group_id}', ['middleware' => ['permissions:chat_groups-create'], 'uses' => 'GroupsController@updateGroup']);
+    $router->delete('{group_id}', ['middleware' => ['permissions:chat_groups-create'], 'uses' => 'GroupsController@deleteGroup']);
+});
