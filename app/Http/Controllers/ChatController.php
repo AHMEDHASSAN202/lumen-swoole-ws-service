@@ -33,4 +33,26 @@ class ChatController extends Controller
 
         return response()->json(['messages' => $messages]);
     }
+
+    /**
+     * On Receive New Chat Message
+     *
+     * @param $websocket
+     * @param $data
+     */
+    public function onMessage($websocket, $data)
+    {
+        app(\App\Repositories\WebSocketRepository::class)->onMessage($websocket, $data);
+    }
+
+    /**
+     * On Receive New Chat Files
+     *
+     * @param $websocket
+     * @param $data
+     */
+    public function onMessageFiles($websocket, $data)
+    {
+        app(\App\Repositories\WebSocketRepository::class)->onMessage($websocket, $data, 'file');
+    }
 }

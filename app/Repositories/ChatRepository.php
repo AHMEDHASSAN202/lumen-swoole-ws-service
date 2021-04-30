@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ChatRepository
@@ -171,13 +172,15 @@ class ChatRepository
      */
     public function getAllGroups()
     {
-        return DB::table(self::GROUPS_TABLE)
+        return Cache::rememberForever(self::GROUPS_TABLE, function () {
+                return DB::table(self::GROUPS_TABLE)
                     ->select('group_id', 'group_name', 'fk_created_by', 'user_name as created_by_name', DB::raw('COUNT(fk_user_id) as count_users'))
                     ->leftJoin(self::USERS_TABLE, 'fk_created_by', '=', 'user_id')
                     ->leftJoin(self::GROUPS_USERS_TABLE, 'group_id', '=', 'fk_group_id')
                     ->groupBy('group_id')
                     ->latest('group_id')
                     ->get();
+        });
     }
 
     /**
@@ -201,6 +204,7 @@ class ChatRepository
             $group_id = DB::table(self::GROUPS_TABLE)->insertGetId([
                 'group_name'    => $group_name,
                 'fk_created_by' => $me->user_id,
+                'group_token'   => random_bytes(50),
                 'created_at'    => Carbon::now()
             ]);
 
@@ -209,6 +213,9 @@ class ChatRepository
             }
 
             $this->joinUsersToGroup($group_id, $members);
+
+            $this->clearGroupsCache();
+
             return true;
         }catch (\Exception $exception) {
             return false;
@@ -242,6 +249,9 @@ class ChatRepository
             }
 
             $this->resetJoinedUsersGroups($group_id, $members);
+
+            $this->clearGroupsCache();
+
             return true;
         }catch (\Exception $exception) {
             return false;
@@ -258,6 +268,8 @@ class ChatRepository
     public function deleteGroup(Request $request, $groupId)
     {
         $me = $request->user();
+
+        $this->clearGroupsCache();
 
         return DB::table(self::GROUPS_TABLE)
                 ->where('group_id', $groupId)
@@ -329,7 +341,88 @@ class ChatRepository
      */
     private function checkGroupExists($group_id, $owner_id): bool
     {
-        return DB::table(self::GROUPS_TABLE)->where('group_id', $group_id)->where('fk_created_by', $owner_id)->exists();
+        $groups = collect(Cache::get(self::GROUPS_TABLE));
+
+        return (bool)$groups->where('group_id', $group_id)->where('fk_created_by', $owner_id)->count();
     }
 
+    /**
+     * Check IF Member is Exists in Group
+     *
+     * @param $group_id
+     * @param $user_id
+     * @return bool
+     */
+    private function checkMemberExistsInGroup($group_id, $user_id): bool
+    {
+        return DB::table(self::GROUPS_USERS_TABLE)->where('fk_group_id', $group_id)->where('fk_user_id', $user_id)->exists();
+    }
+
+    /**
+     * Insert Message attachment Files in DB
+     *
+     * @param $data
+     * @return int
+     */
+    public function saveMessageFiles($data)
+    {
+        return DB::table(self::MESSAGES_FILES_TABLE)->insertGetId($data);
+    }
+
+    /**
+     * Store New Message
+     *
+     * @param $message
+     * @return int
+     */
+    public function addMessage($message)
+    {
+        $message['created_at'] = Carbon::now();
+        return DB::table(self::MESSAGES_TABLE)->insertGetId($message);
+    }
+
+    /**
+     * Get Message By Id
+     * - used it when will retrieve last insert message from last insert id
+     *
+     * @param $messageId
+     * @param false $containFile
+     * @return \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Query\Builder|object|null
+     */
+    public function getMessage($messageId, $containFile=false)
+    {
+        $query = DB::table(self::MESSAGES_TABLE)
+                    ->select(self::MESSAGES_TABLE.'.*', 'user_id', 'user_name', 'user_avatar')
+                    ->join(self::USERS_TABLE, 'user_id', '=', 'fk_sender_id')
+                    ->where('message_id', $messageId);
+
+        if ($containFile) {
+            $query->addSelect('original_name', 'file_path');
+            $query->leftJoin(self::MESSAGES_FILES_TABLE, function ($join) {
+                $join->on('fk_file_id', '=', 'file_id')->where('fk_file_id', '!=', null);
+            });
+        }
+
+        return $query->first();
+    }
+
+    /**
+     * Clear Groups From Cahce
+     *
+     */
+    private function clearGroupsCache()
+    {
+        Cache::forget(self::GROUPS_TABLE);
+    }
+
+    /**
+     * Get User Groups
+     *
+     * @param $userId
+     * @return array
+     */
+    public function getUserGroups($userId)
+    {
+        return DB::table(self::GROUPS_USERS_TABLE)->select('fk_group_id')->where('fk_user_id', $userId)->pluck('fk_group_id')->toArray();
+    }
 }

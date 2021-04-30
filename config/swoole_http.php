@@ -130,11 +130,11 @@ return [
     */
     'tables' => [
          'onlineUsers' => [
-             'size' => 8192,
+             'size' => 4096,
              'columns' => [
                  ['name' => 'fd', 'type' => \Swoole\Table::TYPE_INT],
                  ['name' => 'role_id', 'type' => \Swoole\Table::TYPE_INT],
              ]
-         ],
+         ]
     ],
 ];

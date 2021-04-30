@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use SwooleTW\Http\Websocket\Facades\Room;
 use SwooleTW\Http\Websocket\Facades\Websocket;
 
 class ConnectController extends Controller
@@ -28,6 +29,7 @@ class ConnectController extends Controller
             Websocket::loginUsing($user);
             Websocket::join(self::GLOBAL_ROOM);
             app(\App\Repositories\WebSocketRepository::class)->addToUsersTable($user,  $websocket->getSender());
+            $this->joinToGroups($user->user_id);
             $this->emitOnlineUsers();
         }
     }
@@ -40,8 +42,8 @@ class ConnectController extends Controller
      */
     public function disConnect()
     {
-        Websocket::leave(self::GLOBAL_ROOM);
         app(\App\Repositories\WebSocketRepository::class)->removeFromUsersTable(Websocket::getUserId());
+        $this->leaveAllRooms();
         $this->emitOnlineUsers();
     }
 
@@ -54,5 +56,28 @@ class ConnectController extends Controller
     {
         $onlineUsers = app(\App\Repositories\WebSocketRepository::class)->getOnlineUsers();
         Websocket::to(self::GLOBAL_ROOM)->emit('onlineUsers', $onlineUsers);
+    }
+
+    /**
+     * Join Current User To Own Groups
+     *
+     * @param $user_id
+     */
+    private function joinToGroups($user_id)
+    {
+        $groupsIds = app(\App\Repositories\ChatRepository::class)->getUserGroups($user_id);
+
+        Websocket::join($groupsIds);
+    }
+
+    /**
+     * Leave All Rooms When disconnect
+     *
+     */
+    private function leaveAllRooms()
+    {
+        $rooms = Room::getRooms(Websocket::getSender());
+
+        Websocket::leave($rooms);
     }
 }
