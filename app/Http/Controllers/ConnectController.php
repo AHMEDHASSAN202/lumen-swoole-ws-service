@@ -31,6 +31,7 @@ class ConnectController extends Controller
             app(\App\Repositories\WebSocketRepository::class)->addToUsersTable($user,  $websocket->getSender());
             $this->joinToGroups($user->user_id);
             $this->emitOnlineUsers();
+            $this->emitTotalUnreadMessages();
         }
     }
 
@@ -79,5 +80,10 @@ class ConnectController extends Controller
         $rooms = Room::getRooms(Websocket::getSender());
 
         Websocket::leave($rooms);
+    }
+    
+    private function emitTotalUnreadMessages()
+    {
+        app(\App\Repositories\WebSocketRepository::class)->emitTotalUnreadMessage();
     }
 }

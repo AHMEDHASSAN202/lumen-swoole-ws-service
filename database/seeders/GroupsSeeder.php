@@ -15,8 +15,6 @@ class GroupsSeeder extends Seeder
      */
     public function run()
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS = 0');
-
         DB::table('groups')->truncate();
         DB::table('groups_users')->truncate();
 
@@ -70,7 +68,5 @@ class GroupsSeeder extends Seeder
                 'fk_user_id'     => 3
             ]
         ]);
-
-        DB::statement('SET FOREIGN_KEY_CHECKS = 1');
     }
 }

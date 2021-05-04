@@ -17,7 +17,6 @@ class CreateGroupsTable extends Migration
             $table->id('group_id');
             $table->string('group_name');
             $table->foreignId('fk_created_by')->nullable();
-            $table->string('group_token', 100);
             $table->timestamps();
 
             $table->foreign('fk_created_by')->on('users')->references('user_id')->nullOnDelete();

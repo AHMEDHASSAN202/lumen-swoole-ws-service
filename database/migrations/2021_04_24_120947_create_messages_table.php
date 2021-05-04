@@ -21,7 +21,6 @@ class CreateMessagesTable extends Migration
             $table->foreignId('fk_file_id')->nullable();
             $table->string('message_type')->default('text');
             $table->text('message_content');
-            $table->timestamp('read_at')->default(null);
             $table->timestamps();
 
             $table->foreign('fk_sender_id')->on('users')->references('user_id')->cascadeOnDelete();

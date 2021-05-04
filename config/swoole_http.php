@@ -21,6 +21,8 @@ return [
         'socket_type' => SWOOLE_SOCK_TCP,
         'process_type' => SWOOLE_PROCESS,
         'options' => [
+            'document_root' => base_path('public'),
+            'enable_static_handler' => true,
             'pid_file' => env('SWOOLE_HTTP_PID_FILE', base_path('storage/logs/swoole_http.pid')),
             'log_file' => env('SWOOLE_HTTP_LOG_FILE', base_path('storage/logs/swoole_http.log')),
             'daemonize' => env('SWOOLE_HTTP_DAEMONIZE', false),

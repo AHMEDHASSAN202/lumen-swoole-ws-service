@@ -55,4 +55,13 @@ class ChatController extends Controller
     {
         app(\App\Repositories\WebSocketRepository::class)->onMessage($websocket, $data, 'file');
     }
+    
+
+    public function onUnreadMessage($data)
+    {
+        //read messages
+        //if user_id exists read all messages between current user and user_id
+        //uf group_id exists real all messages in this group
+        app(\App\Repositories\WebSocketRepository::class)->unreadMessage(@$data['last_message_id'], @$data['user_id'], @$data['group_id']);
+    }
 }

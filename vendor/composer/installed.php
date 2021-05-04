@@ -1,12 +1,12 @@
 <?php return array (
   'root' => 
   array (
-    'pretty_version' => '1.0.0+no-version-set',
-    'version' => '1.0.0.0',
+    'pretty_version' => 'dev-main',
+    'version' => 'dev-main',
     'aliases' => 
     array (
     ),
-    'reference' => NULL,
+    'reference' => '808ec83c863c389b7ec33baec8d7ff0bb31c0f7a',
     'name' => 'laravel/lumen',
   ),
   'versions' => 
@@ -349,12 +349,12 @@
     ),
     'laravel/lumen' => 
     array (
-      'pretty_version' => '1.0.0+no-version-set',
-      'version' => '1.0.0.0',
+      'pretty_version' => 'dev-main',
+      'version' => 'dev-main',
       'aliases' => 
       array (
       ),
-      'reference' => NULL,
+      'reference' => '808ec83c863c389b7ec33baec8d7ff0bb31c0f7a',
     ),
     'laravel/lumen-framework' => 
     array (
@@ -364,6 +364,24 @@
       array (
       ),
       'reference' => '6ed02d4d1a6e203b9e896bd105b2e838866f2951',
+    ),
+    'league/flysystem' => 
+    array (
+      'pretty_version' => '1.1.3',
+      'version' => '1.1.3.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '9be3b16c877d477357c015cec057548cf9b2a14a',
+    ),
+    'league/mime-type-detection' => 
+    array (
+      'pretty_version' => '1.7.0',
+      'version' => '1.7.0.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '3b9dff8aaf7323590c1d2e443db701eb1f9aa0d3',
     ),
     'mockery/mockery' => 
     array (

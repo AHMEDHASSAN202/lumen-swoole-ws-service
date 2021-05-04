@@ -115,7 +115,7 @@ class WebSocketRepository {
         }
         if ($message->fk_group_id) {
             //group message
-            return Websocket::to($message->fk_group_id)->emit('private_message', $message);
+            return Websocket::to((string)$message->fk_group_id)->emit('private_message', $message);
         }
         return;
     }
@@ -208,10 +208,10 @@ class WebSocketRepository {
             'message_content'   => '',
         ];
 
-        if ($data['group_id']) {
-            $path = 'chats/chat_' . $message['fk_sender_id'] . '_' . $message['fk_receiver_id'] . '/';
+        if (@$data['group_id']) {
+            $path = 'chats/group_' . $message['fk_group_id'] . '/';
         }else {
-            $path = 'chats/group_' . $message['fk_sender_id'] . '_' . $message['fk_group_id'] . '/';
+            $path = 'chats/chat_' . $message['fk_sender_id'] . '_' . $message['fk_receiver_id'] . '/';
         }
 
         $filesIds = $this->storeFiles($data['files'], $path);
@@ -270,8 +270,26 @@ class WebSocketRepository {
 
         $image = str_replace(' ', '+', $image);
 
-        $imageName = random_bytes(20).'.'.$extension;
+        $imagePath = $path . bin2hex(random_bytes(20)).'.'.$extension;
 
-        return Storage::disk('public')->put($path + $imageName, base64_decode($image));
+        Storage::disk('public')->put($imagePath, base64_decode($image));
+
+        return $imagePath;
+    }
+
+    public function unreadMessage($last_message_id, $user_id=null, $group_id=null)
+    {
+        $unreadMessages = app(\App\Repositories\ChatRepository::class)->readMessages($last_message_id, $user_id, $group_id);
+
+        Websocket::emit('unread_messages', $unreadMessages);
+
+        $this->emitTotalUnreadMessage();
+    }
+
+    public function emitTotalUnreadMessage()
+    {
+        $totalUnreadMessages = app(\App\Repositories\ChatRepository::class)->getTotalUnreadMessage();
+
+        Websocket::emit('total_unread_messages', $totalUnreadMessages);
     }
 }

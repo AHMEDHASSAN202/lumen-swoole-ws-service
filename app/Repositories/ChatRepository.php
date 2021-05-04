@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use SwooleTW\Http\Websocket\Facades\Websocket;
 
 class ChatRepository
 {
@@ -21,6 +22,7 @@ class ChatRepository
     const GROUPS_TABLE = 'groups';
     const GROUPS_USERS_TABLE = 'groups_users';
     const ROLES_DESCRIPTIONS_TABLE = 'roles_description';
+    const LAST_READ_MESSAGES_TABLE = 'last_read_messages';
     const DEFAULT_LANGUAGE_ID = 1;
     const FAKE_USERS_GROUPS_PER_REQUEST = 200;
     const MESSAGES_PER_REQUEST = 100;
@@ -341,8 +343,7 @@ class ChatRepository
      */
     private function checkGroupExists($group_id, $owner_id): bool
     {
-        $groups = collect(Cache::get(self::GROUPS_TABLE));
-
+        $groups = $this->getAllGroups();
         return (bool)$groups->where('group_id', $group_id)->where('fk_created_by', $owner_id)->count();
     }
 
@@ -353,7 +354,7 @@ class ChatRepository
      * @param $user_id
      * @return bool
      */
-    private function checkMemberExistsInGroup($group_id, $user_id): bool
+    public function checkMemberExistsInGroup($group_id, $user_id): bool
     {
         return DB::table(self::GROUPS_USERS_TABLE)->where('fk_group_id', $group_id)->where('fk_user_id', $user_id)->exists();
     }
@@ -425,4 +426,59 @@ class ChatRepository
     {
         return DB::table(self::GROUPS_USERS_TABLE)->select('fk_group_id')->where('fk_user_id', $userId)->pluck('fk_group_id')->toArray();
     }
+
+    public function getLastUnreadMessage()
+    {
+        $myId = Websocket::getUserId();
+        return DB::table(self::LAST_READ_MESSAGES_TABLE)
+                ->select('fk_sender_id as user_id', self::LAST_READ_MESSAGES_TABLE.'.fk_group_id as group_id', 'fk_message_id as last_message_id', self::LAST_READ_MESSAGES_TABLE.'.fk_user_id as u_id')
+                ->leftJoin(self::GROUPS_USERS_TABLE, function ($join) use ($myId) {
+                    $join->on(self::GROUPS_USERS_TABLE.'.fk_group_id', '=', self::LAST_READ_MESSAGES_TABLE.'.fk_group_id')->where(self::GROUPS_USERS_TABLE.'.fk_user_id', $myId);
+                })
+                ->where(function ($query) use ($myId) {
+                    $query->where(self::LAST_READ_MESSAGES_TABLE.'.fk_user_id', $myId);
+                })
+                ->get();
+    }
+
+    public function getTotalUnreadMessage()
+    {
+        $myId = Websocket::getUserId();
+        $maxMessage = DB::table(self::LAST_READ_MESSAGES_TABLE)->where('fk_user_id', $myId)->max('fk_message_id');
+        if (!$maxMessage) return 0;
+        return DB::table(self::MESSAGES_TABLE)
+                ->select(DB::raw('COUNT(message_id) as max_unread_message'))
+                ->leftJoin(self::GROUPS_USERS_TABLE, function ($join) use ($myId) {
+                    $join->on(self::GROUPS_USERS_TABLE.'.fk_group_id', '=', self::MESSAGES_TABLE.'.fk_group_id')->where(self::GROUPS_USERS_TABLE.'.fk_user_id', $myId);
+                })
+                ->where('message_id', '>', $maxMessage)
+                ->where('fk_sender_id', '!=', $myId)
+                ->where(function ($query) use ($myId) {
+                    $query->where('fk_receiver_id', $myId);
+                })
+                ->value('max_unread_message');
+    }
+
+    public function readMessages($last_message_id, $user_id=null, $group_id=null)
+    {
+        if ($last_message_id) {
+            if ($user_id) {
+                DB::table(self::LAST_READ_MESSAGES_TABLE)
+                    ->updateOrInsert(
+                        ['fk_sender_id' => (int)$user_id, 'fk_user_id' => (int)Websocket::getUserId()],
+                        ['fk_message_id' => (int)$last_message_id]
+                    );
+            }
+            if ($group_id) {
+                DB::table(self::LAST_READ_MESSAGES_TABLE)
+                    ->updateOrInsert(
+                        ['fk_group_id' => (int)$group_id, 'fk_user_id' => (int)Websocket::getUserId()],
+                        ['fk_message_id' => (int)$last_message_id]
+                    );
+            }
+        }
+
+        return $this->getLastUnreadMessage();
+    }
 }
+
