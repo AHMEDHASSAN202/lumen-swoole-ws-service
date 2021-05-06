@@ -79,6 +79,7 @@ $app->middleware([
  $app->routeMiddleware([
      'auth' => App\Http\Middleware\Authenticate::class,
      'permissions' => App\Http\Middleware\Permissions::class,
+     'verifyApp' => App\Http\Middleware\VerifyApp::class,
  ]);
 
 /*

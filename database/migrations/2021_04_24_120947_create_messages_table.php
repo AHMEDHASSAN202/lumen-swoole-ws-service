@@ -21,7 +21,8 @@ class CreateMessagesTable extends Migration
             $table->foreignId('fk_file_id')->nullable();
             $table->string('message_type')->default('text');
             $table->text('message_content');
-            $table->timestamps();
+            $table->timestamp('created_at')->default(\Illuminate\Support\Facades\DB::raw('CURRENT_TIMESTAMP'));
+            $table->timestamp('updated_at')->default(\Illuminate\Support\Facades\DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
 
             $table->foreign('fk_sender_id')->on('users')->references('user_id')->cascadeOnDelete();
             $table->foreign('fk_receiver_id')->on('users')->references('user_id')->cascadeOnDelete();

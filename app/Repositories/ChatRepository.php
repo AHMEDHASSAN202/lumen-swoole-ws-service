@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use SwooleTW\Http\Websocket\Facades\Room;
 use SwooleTW\Http\Websocket\Facades\Websocket;
 
 class ChatRepository
@@ -293,7 +294,24 @@ class ChatRepository
             $joinedArray[] = ['fk_group_id' => $groupId, 'fk_user_id' => $userId];
         }
 
-        DB::table(self::GROUPS_USERS_TABLE)->insert($joinedArray);
+        $inserted = DB::table(self::GROUPS_USERS_TABLE)->insert($joinedArray);
+
+        if ($inserted) {
+            $oldFdUsersJoinedToThisGroup = Room::getClients((string)$groupId);
+            //remove all clients in this group
+            foreach ($oldFdUsersJoinedToThisGroup as $item) {
+                Room::delete($item, [(string)$groupId]);
+            }
+            //joined again with new online members
+            $allOnlineUsers = app(\App\Repositories\WebSocketRepository::class)->getOnlineUsers();
+            $getOnlineMembersGroup = array_intersect($membersIds, $allOnlineUsers);
+            foreach ($getOnlineMembersGroup as $onlineMemberId) {
+                $fd = app(\App\Repositories\WebSocketRepository::class)->getFdFromUserId($onlineMemberId);
+                if ($fd) {
+                    Room::add($fd, [(string)$groupId]);
+                }
+            }
+        }
     }
 
     /**
@@ -378,7 +396,7 @@ class ChatRepository
      */
     public function addMessage($message)
     {
-        $message['created_at'] = Carbon::now();
+//        $message['created_at'] = \Carbon\Carbon::now()->toISOString();
         return DB::table(self::MESSAGES_TABLE)->insertGetId($message);
     }
 
@@ -427,6 +445,11 @@ class ChatRepository
         return DB::table(self::GROUPS_USERS_TABLE)->select('fk_group_id')->where('fk_user_id', $userId)->pluck('fk_group_id')->toArray();
     }
 
+    /**
+     * Get last unread messages chats
+     *
+     * @return Collection
+     */
     public function getLastUnreadMessage()
     {
         $myId = Websocket::getUserId();
@@ -441,6 +464,11 @@ class ChatRepository
                 ->get();
     }
 
+    /**
+     * Get total unread messages all chats
+     *
+     * @return int|mixed|null
+     */
     public function getTotalUnreadMessage()
     {
         $myId = Websocket::getUserId();
@@ -459,6 +487,14 @@ class ChatRepository
                 ->value('max_unread_message');
     }
 
+    /**
+     * Mark as read message
+     * 
+     * @param $last_message_id
+     * @param null $user_id
+     * @param null $group_id
+     * @return Collection
+     */
     public function readMessages($last_message_id, $user_id=null, $group_id=null)
     {
         if ($last_message_id) {

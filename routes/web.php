@@ -31,3 +31,23 @@ $router->group(['middleware' => 'auth', 'prefix' => 'groups'], function () use (
     $router->put('{group_id}', ['middleware' => ['permissions:chat_groups-create'], 'uses' => 'GroupsController@updateGroup']);
     $router->delete('{group_id}', ['middleware' => ['permissions:chat_groups-create'], 'uses' => 'GroupsController@deleteGroup']);
 });
+
+//get online users
+$router->group(['middleware' => 'auth', 'prefix' => 'users'], function () use ($router) {
+    $router->get('online', ['middleware' => ['permissions:users-browse'], 'uses' => 'UsersController@getOnlineUsers']);
+});
+
+//app api
+//this apis send it from backend
+$router->group(['middleware' => 'verifyApp'], function () use ($router) {
+    //userId => array of user id => notify users
+    //data  => notification content
+    //we well emit notification event to users with data
+    $router->post('notifications', ['uses' => 'NotificationController@notifyUsers']);
+
+    //event_name => string
+    //data => content
+    //userId => array of user id -> optional default all online users
+    //we well emit this event name with data to users
+    $router->post('event/emit', ['uses' => 'EventController@emit']);
+});

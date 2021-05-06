@@ -17,7 +17,8 @@ class CreateGroupsTable extends Migration
             $table->id('group_id');
             $table->string('group_name');
             $table->foreignId('fk_created_by')->nullable();
-            $table->timestamps();
+            $table->timestamp('created_at')->default(\Illuminate\Support\Facades\DB::raw('CURRENT_TIMESTAMP'));
+            $table->timestamp('updated_at')->default(\Illuminate\Support\Facades\DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
 
             $table->foreign('fk_created_by')->on('users')->references('user_id')->nullOnDelete();
         });

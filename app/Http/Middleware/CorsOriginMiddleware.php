@@ -16,7 +16,7 @@ class CorsOriginMiddleware
     public function handle($request, Closure $next)
     {
         $headers = [
-            'Access-Control-Allow-Origin'       =>  env('MAIN_DOMAIN'),
+            'Access-Control-Allow-Origin'       =>  env('APP_DOMAIN'),
             'Access-Control-Allow-Credentials'  =>  'true',
             'Access-Control-Allow-Methods'      =>  'GET, POST, PATCH, PUT, DELETE, OPTIONS, HEAD',
             'Access-Control-Allow-Headers'      =>  '*',

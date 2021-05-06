@@ -81,7 +81,11 @@ class ConnectController extends Controller
 
         Websocket::leave($rooms);
     }
-    
+
+    /**
+     * Emit total unread messages event
+     * 
+     */
     private function emitTotalUnreadMessages()
     {
         app(\App\Repositories\WebSocketRepository::class)->emitTotalUnreadMessage();

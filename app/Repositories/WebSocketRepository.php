@@ -6,6 +6,7 @@ namespace App\Repositories;
 use Illuminate\Support\Facades\Storage;
 use SwooleTW\Http\Table\Facades\SwooleTable as Table;
 use SwooleTW\Http\Websocket\Facades\Websocket;
+use Illuminate\Support\Facades\Validator;
 
 class WebSocketRepository {
 
@@ -50,6 +51,22 @@ class WebSocketRepository {
             $onlineUsers[] = (int)$userId;
         }
         return $onlineUsers;
+    }
+
+    public function getUserIdFromFd($fd)
+    {
+        $table = Table::get(self::TABLE_NAME);
+        foreach ($table as $userId => $userData) {
+            if ((string)$userData['fd'] === (string)$fd) {
+                return $userId;
+            }
+        }
+    }
+
+    public function getFdFromUserId($user_id)
+    {
+        $table = Table::get(self::TABLE_NAME);
+        return $table->get($user_id, 'fd');
     }
 
     /**
@@ -277,6 +294,13 @@ class WebSocketRepository {
         return $imagePath;
     }
 
+    /**
+     * mark as read messages and emit again all unread last messages
+     *
+     * @param $last_message_id
+     * @param null $user_id
+     * @param null $group_id
+     */
     public function unreadMessage($last_message_id, $user_id=null, $group_id=null)
     {
         $unreadMessages = app(\App\Repositories\ChatRepository::class)->readMessages($last_message_id, $user_id, $group_id);
@@ -286,10 +310,66 @@ class WebSocketRepository {
         $this->emitTotalUnreadMessage();
     }
 
+    /**
+     * Get total unread messages
+     * 
+     */
     public function emitTotalUnreadMessage()
     {
         $totalUnreadMessages = app(\App\Repositories\ChatRepository::class)->getTotalUnreadMessage();
 
         Websocket::emit('total_unread_messages', $totalUnreadMessages);
+    }
+
+    /**
+     * Notification Users
+     * Notify Users By [user id]
+     *
+     * @param $request
+     * @return bool|\Illuminate\Support\MessageBag
+     */
+    public function notifyUsers($request)
+    {
+        $requestData = $request->only(['userId', 'content']);
+
+        $validator = Validator::make($requestData,[
+            'userId' => 'required|array',
+            'content' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $validator->errors();
+        }
+
+        return Websocket::toUserId($requestData['userId'])->emit('notification', $requestData['content']);
+    }
+
+    /**
+     * Emit any content to custom event name and specific users
+     *
+     * @param $request
+     * @return bool|\Illuminate\Support\MessageBag
+     */
+    public function emit($request)
+    {
+        $requestData = $request->only(['userId', 'event_name', 'content']);
+
+        $validator = Validator::make($requestData, [
+            'userId' => 'sometimes|array',
+            'event_name' => 'required|string',
+            'content' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $validator->errors();
+        }
+
+        if (empty($requestData['userId'])) {
+            $users = $this->getOnlineUsers();
+        }else {
+            $users = $requestData['userId'];
+        }
+
+        return Websocket::toUserId($users)->emit($requestData['event_name'], $requestData['content']);
     }
 }
