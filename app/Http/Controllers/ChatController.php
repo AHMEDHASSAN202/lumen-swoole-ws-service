@@ -39,10 +39,13 @@ class ChatController extends Controller
      *
      * @param $websocket
      * @param $data
+     * @return void
      */
     public function onMessage($websocket, $data)
     {
         app(\App\Repositories\WebSocketRepository::class)->onMessage($websocket, $data);
+
+        $this->disconnectDatabase();
     }
 
     /**
@@ -50,10 +53,13 @@ class ChatController extends Controller
      *
      * @param $websocket
      * @param $data
+     * @return void
      */
     public function onMessageFiles($websocket, $data)
     {
         app(\App\Repositories\WebSocketRepository::class)->onMessage($websocket, $data, 'file');
+
+        $this->disconnectDatabase();
     }
     
 
@@ -62,6 +68,8 @@ class ChatController extends Controller
         //read messages
         //if user_id exists read all messages between current user and user_id
         //uf group_id exists real all messages in this group
-        app(\App\Repositories\WebSocketRepository::class)->unreadMessage(@$data['last_message_id'], @$data['user_id'], @$data['group_id']);
+       app(\App\Repositories\WebSocketRepository::class)->unreadMessage(@$data['last_message_id'], @$data['user_id'], @$data['group_id']);
+
+        $this->disconnectDatabase();
     }
 }

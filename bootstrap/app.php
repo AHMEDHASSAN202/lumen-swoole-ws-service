@@ -60,6 +60,7 @@ $app->singleton(
 */
 
 $app->configure('app');
+$app->configure('database');
 
 /*
 |--------------------------------------------------------------------------
@@ -74,6 +75,7 @@ $app->configure('app');
 
 $app->middleware([
     App\Http\Middleware\CorsOriginMiddleware::class,
+    App\Http\Middleware\DisconnectDatabase::class,
 ]);
 
  $app->routeMiddleware([

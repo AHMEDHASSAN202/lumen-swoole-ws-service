@@ -101,9 +101,10 @@ return [
     |--------------------------------------------------------------------------
     */
     'providers' => [
+        Illuminate\Database\DatabaseServiceProvider::class,
         Illuminate\Pagination\PaginationServiceProvider::class,
         App\Providers\AppServiceProvider::class,
-        App\Providers\AuthServiceProvider::class
+        App\Providers\AuthServiceProvider::class,
     ],
 
     /*

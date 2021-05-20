@@ -33,6 +33,8 @@ class ConnectController extends Controller
             $this->emitOnlineUsers();
             $this->emitTotalUnreadMessages();
         }
+
+        $this->disconnectDatabase();
     }
 
     /**
@@ -46,6 +48,8 @@ class ConnectController extends Controller
         app(\App\Repositories\WebSocketRepository::class)->removeFromUsersTable(Websocket::getUserId());
         $this->leaveAllRooms();
         $this->emitOnlineUsers();
+
+        $this->disconnectDatabase();
     }
 
     /**
@@ -56,6 +60,7 @@ class ConnectController extends Controller
     private function emitOnlineUsers()
     {
         $onlineUsers = app(\App\Repositories\WebSocketRepository::class)->getOnlineUsers();
+
         Websocket::to(self::GLOBAL_ROOM)->emit('onlineUsers', $onlineUsers);
     }
 
@@ -63,6 +68,7 @@ class ConnectController extends Controller
      * Join Current User To Own Groups
      *
      * @param $user_id
+     * @return void
      */
     private function joinToGroups($user_id)
     {
@@ -88,6 +94,6 @@ class ConnectController extends Controller
      */
     private function emitTotalUnreadMessages()
     {
-        app(\App\Repositories\WebSocketRepository::class)->emitTotalUnreadMessage();
+        return app(\App\Repositories\WebSocketRepository::class)->emitTotalUnreadMessage();
     }
 }
