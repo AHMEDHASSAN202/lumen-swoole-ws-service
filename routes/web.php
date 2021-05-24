@@ -14,9 +14,6 @@
 */
 
 $router->get('/', function () use ($router) {
-    echo '<pre>';
-    print_r(app('db')->table('users')->select('user_id')->get());
-    echo '</pre>';
     return $router->app->version();
 });
 

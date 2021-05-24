@@ -45,11 +45,13 @@ class ConnectController extends Controller
      */
     public function disConnect()
     {
-        app(\App\Repositories\WebSocketRepository::class)->removeFromUsersTable(Websocket::getUserId());
-        $this->leaveAllRooms();
-        $this->emitOnlineUsers();
-
-        $this->disconnectDatabase();
+        if (Websocket::getUserId()) {
+            Websocket::logout();
+            app(\App\Repositories\WebSocketRepository::class)->removeFromUsersTable(Websocket::getUserId());
+            $this->leaveAllRooms();
+            $this->emitOnlineUsers();
+            $this->disconnectDatabase();
+        }
     }
 
     /**
@@ -60,7 +62,6 @@ class ConnectController extends Controller
     private function emitOnlineUsers()
     {
         $onlineUsers = app(\App\Repositories\WebSocketRepository::class)->getOnlineUsers();
-
         Websocket::to(self::GLOBAL_ROOM)->emit('onlineUsers', $onlineUsers);
     }
 
@@ -73,7 +74,6 @@ class ConnectController extends Controller
     private function joinToGroups($user_id)
     {
         $groupsIds = app(\App\Repositories\ChatRepository::class)->getUserGroups($user_id);
-
         Websocket::join($groupsIds);
     }
 
@@ -84,7 +84,6 @@ class ConnectController extends Controller
     private function leaveAllRooms()
     {
         $rooms = Room::getRooms(Websocket::getSender());
-
         Websocket::leave($rooms);
     }
 

@@ -75,13 +75,13 @@ $app->configure('database');
 
 $app->middleware([
     App\Http\Middleware\CorsOriginMiddleware::class,
-    App\Http\Middleware\DisconnectDatabase::class,
 ]);
 
  $app->routeMiddleware([
      'auth' => App\Http\Middleware\Authenticate::class,
      'permissions' => App\Http\Middleware\Permissions::class,
      'verifyApp' => App\Http\Middleware\VerifyApp::class,
+     'disconnectDB' => App\Http\Middleware\DisconnectDatabase::class,
  ]);
 
 /*
@@ -112,6 +112,7 @@ $app->register(SwooleTW\Http\LumenServiceProvider::class);
 
 $app->router->group([
     'namespace' => 'App\Http\Controllers',
+    'middleware' => 'disconnectDB'
 ], function ($router) {
     require __DIR__.'/../routes/web.php';
 });
