@@ -207,7 +207,6 @@ class ChatRepository
             $group_id = DB::table(self::GROUPS_TABLE)->insertGetId([
                 'group_name'    => $group_name,
                 'fk_created_by' => $me->user_id,
-                'group_token'   => random_bytes(50),
                 'created_at'    => Carbon::now()
             ]);
 
